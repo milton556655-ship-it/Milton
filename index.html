@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Generation App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .message {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            display: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Video Generation</h1>
+        <input type="file" id="imageUpload" accept="image/*">
+        <select id="videoQuality">
+            <option value="low">Low Quality</option>
+            <option value="medium">Medium Quality</option>
+            <option value="high">High Quality</option>
+        </select>
+        <input type="number" id="videoDuration" placeholder="Duration (6-10 seconds)" min="6" max="10">
+        <button id="generateBtn">Generate Video</button>
+        <div class="loading">Generating video, please wait...</div>
+        <div class="message success" id="successMsg">Video generated successfully!</div>
+        <div class="message error" id="errorMsg">Error generating video.</div>
+    </div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            const imageFile = document.getElementById('imageUpload').files[0];
+            const duration = document.getElementById('videoDuration').value;
+            const quality = document.getElementById('videoQuality').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            const loading = document.querySelector('.loading');
+
+            // Reset messages
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            loading.style.display = 'none';
+
+            if (!imageFile || duration < 6 || duration > 10) {
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            loading.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            formData.append('duration', duration);
+            formData.append('quality', quality);
+
+            try {
+                const response = await fetch('https://api.qwen3.5-plus/video/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer 1e529527-c12e-4aec-a10a-f2f014e84eb3:ccaf5aaca8cd2686babce063c467d23f',
+                    },
+                    body: formData,
+                });
+                if (!response.ok) throw new Error('Failed to generate video');
+                successMsg.style.display = 'block';
+            } catch (error) {
+                errorMsg.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
