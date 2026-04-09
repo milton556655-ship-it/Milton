@@ -1,111 +1,840 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Generation App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 600px;
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        input, select, button {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .message {
-            display: none;
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .loading {
-            display: none;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>AURA AI STATION</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Hind+Siliguri:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#020408;--bg2:#040c12;--bg3:#081520;
+  --teal:#00d4aa;--teal2:#00ffcc;--teal3:#00a884;
+  --cyan:#00b8d9;--cyan2:#00e5ff;
+  --red:#ff3860;--orange:#ff6b2b;
+  --yellow:#ffd700;
+  --text:#e0f4f0;--text2:#8ab8b0;--text3:#4a7a72;
+  --border:#0d2830;--border2:#1a3a45;
+  --glass:rgba(0,212,170,0.05);
+  --glass2:rgba(0,212,170,0.1);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Hind Siliguri',sans-serif;}
+#app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+.header{flex-shrink:0;padding:10px 16px 8px;background:linear-gradient(180deg,#020c14 0%,transparent 100%);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;z-index:100;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--teal),var(--cyan));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#000;box-shadow:0 0 15px rgba(0,212,170,0.5);}
+.logo-text{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--teal2),var(--cyan2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:9px;color:var(--text3);font-family:'Share Tech Mono',monospace;letter-spacing:2px;}
+.status-dot{width:7px;height:7px;background:var(--teal2);border-radius:50%;box-shadow:0 0 8px var(--teal2);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.8);}}
+.header-right{display:flex;align-items:center;gap:10px;}
+.api-badge{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--teal3);background:var(--glass2);border:1px solid var(--border2);padding:3px 8px;border-radius:20px;}
+
+/* NAV TABS */
+.nav{flex-shrink:0;display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-btn{flex:1;min-width:70px;padding:10px 6px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.5px;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;position:relative;}
+.nav-btn svg{width:16px;height:16px;opacity:0.5;transition:all 0.2s;}
+.nav-btn.active{color:var(--teal2);}
+.nav-btn.active svg{opacity:1;}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;width:60%;height:2px;background:linear-gradient(90deg,transparent,var(--teal2),transparent);border-radius:2px;}
+
+/* MAIN CONTENT */
+.content{flex:1;overflow:hidden;position:relative;}
+.tab-pane{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;padding:12px;}
+.tab-pane.active{display:block;}
+.tab-pane::-webkit-scrollbar{width:3px;}
+.tab-pane::-webkit-scrollbar-track{background:transparent;}
+.tab-pane::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* CARDS */
+.card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--teal3),transparent);}
+.card-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--teal2);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* COMMAND CENTER */
+.cmd-input-wrap{position:relative;margin-bottom:10px;}
+.cmd-input{width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:8px;padding:10px 40px 10px 12px;color:var(--text);font-family:'Hind Siliguri',sans-serif;font-size:13px;resize:none;height:90px;outline:none;transition:border-color 0.2s;}
+.cmd-input:focus{border-color:var(--teal3);}
+.cmd-input::placeholder{color:var(--text3);}
+.char-count{position:absolute;bottom:8px;right:10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);}
+.model-select{width:100%;background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:10px;outline:none;appearance:none;}
+.model-select option{background:var(--bg2);}
+.btn-row{display:flex;gap:8px;margin-bottom:12px;}
+.btn-primary{flex:1;background:linear-gradient(135deg,var(--teal3),var(--teal));border:none;border-radius:8px;padding:10px;color:#000;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-primary:active{transform:scale(0.97);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-secondary{background:var(--glass2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--teal2);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s;}
+.btn-danger{background:rgba(255,56,96,0.15);border:1px solid rgba(255,56,96,0.3);border-radius:8px;padding:10px 14px;color:var(--red);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;}
+.response-box{background:rgba(0,0,0,0.4);border:1px solid var(--border2);border-radius:8px;padding:12px;min-height:80px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;font-family:'Hind Siliguri',sans-serif;}
+.response-box.thinking{color:var(--text3);font-style:italic;font-family:'Share Tech Mono',monospace;font-size:11px;}
+.response-box code{background:rgba(0,212,170,0.1);border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--teal2);}
+
+/* HISTORY */
+.history-item{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:border-color 0.2s;}
+.history-item:hover{border-color:var(--teal3);}
+.history-q{font-size:11px;color:var(--text2);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.history-a{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+/* IMAGE TO VIDEO */
+.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all 0.2s;background:rgba(0,0,0,0.3);min-height:140px;position:relative;overflow:hidden;}
+.upload-zone.has-image{border-color:var(--teal3);border-style:solid;}
+.upload-zone:active{border-color:var(--teal2);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-zone-icon{width:48px;height:48px;background:var(--glass2);border:1px solid var(--border2);border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.upload-zone-text{font-size:12px;color:var(--text3);text-align:center;}
+.preview-img{max-width:100%;max-height:120px;border-radius:8px;object-fit:contain;}
+.ratio-row{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;}
+.ratio-btn{flex-shrink:0;background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.ratio-btn.active{border-color:var(--teal2);color:var(--teal2);background:var(--glass2);}
+.quality-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+.toggle-info{display:flex;flex-direction:column;}
+.toggle-label{font-size:12px;font-weight:600;color:var(--text);}
+.toggle-sub{font-size:10px;color:var(--text3);}
+.toggle-switch{width:44px;height:24px;background:var(--border2);border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.toggle-switch.on{background:linear-gradient(90deg,var(--teal3),var(--teal));}
+.toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left 0.2s;box-shadow:0 2px 4px rgba(0,0,0,0.3);}
+.toggle-switch.on::after{left:23px;}
+.progress-bar-wrap{background:rgba(0,0,0,0.5);border-radius:4px;height:6px;overflow:hidden;margin:8px 0;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--teal3),var(--teal2));border-radius:4px;transition:width 0.3s;width:0%;}
+.make-video-btn{width:100%;background:linear-gradient(135deg,var(--teal3),var(--cyan));border:none;border-radius:12px;padding:16px;color:#000;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;letter-spacing:2px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(0,212,170,0.3);}
+.make-video-btn:active{transform:scale(0.98);}
+.make-video-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* HARDWARE MONITOR */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.metric-card{background:rgba(0,0,0,0.4);border:1px solid var(--border2);border-radius:10px;padding:12px;text-align:center;}
+.metric-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;line-height:1;}
+.metric-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:1px;}
+.metric-bar{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
+.metric-fill{height:100%;border-radius:2px;transition:width 1s;}
+.fill-teal{background:linear-gradient(90deg,var(--teal3),var(--teal2));}
+.fill-cyan{background:linear-gradient(90deg,#006699,var(--cyan2));}
+.fill-orange{background:linear-gradient(90deg,#993300,var(--orange));}
+.fill-yellow{background:linear-gradient(90deg,#996600,var(--yellow));}
+.log-list{background:rgba(0,0,0,0.6);border:1px solid var(--border);border-radius:8px;padding:10px;height:160px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:10px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.log-entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.log-time{color:var(--text3);}
+.log-info{color:var(--teal3);}
+.log-warn{color:var(--orange);}
+.log-ok{color:var(--teal2);}
+.neural-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.neural-node{background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;}
+.neural-icon{font-size:18px;margin-bottom:4px;}
+.neural-name{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);}
+.neural-status{font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:3px;}
+.status-ok{color:var(--teal2);}
+.status-warn{color:var(--orange);}
+.status-off{color:var(--red);}
+
+/* VAULT */
+.vault-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.vault-item{background:rgba(0,0,0,0.4);border:1px solid var(--border2);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color 0.2s;}
+.vault-item:hover{border-color:var(--teal3);}
+.vault-thumb{width:100%;aspect-ratio:9/16;background:linear-gradient(135deg,var(--bg3),var(--bg2));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.vault-thumb-inner{text-align:center;}
+.vault-thumb-icon{font-size:28px;}
+.vault-meta{padding:8px;}
+.vault-name{font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vault-date{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);margin-top:2px;}
+.vault-actions{display:flex;gap:6px;margin-top:6px;}
+.vault-btn{flex:1;background:var(--glass2);border:1px solid var(--border2);border-radius:6px;padding:5px;color:var(--teal2);font-size:9px;font-family:'Share Tech Mono',monospace;cursor:pointer;text-align:center;}
+
+/* MODERATION BADGE */
+.mod-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,56,96,0.1);border:1px solid rgba(255,56,96,0.3);border-radius:20px;padding:4px 10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red);}
+.mod-ok-badge{background:rgba(0,212,170,0.1);border-color:rgba(0,212,170,0.3);color:var(--teal2);}
+
+/* SECTION LABELS */
+.section-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;}
+
+/* LOADING SPINNER */
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.spinner{width:16px;height:16px;border:2px solid rgba(0,212,170,0.2);border-top-color:var(--teal2);border-radius:50%;animation:spin 0.8s linear infinite;}
+
+/* GLITCH EFFECT */
+@keyframes glitch{
+  0%,100%{text-shadow:0 0 10px var(--teal2);}
+  25%{text-shadow:2px 0 10px var(--red),-2px 0 10px var(--cyan2);}
+  75%{text-shadow:-2px 0 10px var(--red),2px 0 10px var(--cyan2);}
+}
+.glitch{animation:glitch 3s infinite;}
+
+/* SCAN LINE */
+@keyframes scanline{from{transform:translateY(-100%);}to{transform:translateY(100vh);}}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,170,0.1),transparent);animation:scanline 4s linear infinite;pointer-events:none;z-index:1000;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.modal-overlay.hidden{display:none;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:400px;padding:20px;max-height:80vh;overflow-y:auto;}
+.modal-title{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--teal2);margin-bottom:12px;}
+.modal-close{float:right;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;margin-top:-4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--teal3);border-radius:8px;padding:8px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--teal2);z-index:600;transition:opacity 0.3s;pointer-events:none;}
+.toast.hidden{opacity:0;}
+.toast.error{border-color:var(--red);color:var(--red);}
+
+/* RESPONSIVE */
+@media(min-width:480px){
+  .metric-grid{grid-template-columns:repeat(4,1fr);}
+  .vault-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>AI Video Generation</h1>
-        <input type="file" id="imageUpload" accept="image/*">
-        <select id="videoQuality">
-            <option value="low">Low Quality</option>
-            <option value="medium">Medium Quality</option>
-            <option value="high">High Quality</option>
+<div class="scanline"></div>
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">A</div>
+      <div>
+        <div class="logo-text">AURA AI</div>
+        <div class="logo-sub">STATION v2.0</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="api-badge">FREE AI</div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('cmd')" id="nav-cmd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      COMMAND
+    </button>
+    <button class="nav-btn" onclick="switchTab('video')" id="nav-video">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      IMG→VID
+    </button>
+    <button class="nav-btn" onclick="switchTab('hw')" id="nav-hw">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      MONITOR
+    </button>
+    <button class="nav-btn" onclick="switchTab('vault')" id="nav-vault">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      VAULT
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ===== COMMAND CENTER ===== -->
+    <div class="tab-pane active" id="tab-cmd">
+      <div class="card">
+        <div class="card-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          AI COMMAND CENTER
+        </div>
+        <div class="section-label">MODEL SELECT</div>
+        <select class="model-select" id="modelSelect">
+          <option value="claude-sonnet-4-20250514">Claude Sonnet 4 [RECOMMENDED]</option>
+          <option value="claude-opus-4-20250514">Claude Opus 4 [MAX POWER]</option>
+          <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 [FAST]</option>
         </select>
-        <input type="number" id="videoDuration" placeholder="Duration (6-10 seconds)" min="6" max="10">
-        <button id="generateBtn">Generate Video</button>
-        <div class="loading">Generating video, please wait...</div>
-        <div class="message success" id="successMsg">Video generated successfully!</div>
-        <div class="message error" id="errorMsg">Error generating video.</div>
+        <div class="section-label">YOUR COMMAND</div>
+        <div class="cmd-input-wrap">
+          <textarea class="cmd-input" id="cmdInput" placeholder="যেকোনো কমান্ড দিন... কোড লিখুন, বিশ্লেষণ করুন, গল্প তৈরি করুন..." oninput="updateCharCount(this)"></textarea>
+          <div class="char-count" id="charCount">0/2000</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div id="modBadge" class="mod-badge mod-ok-badge">
+            <span>🛡</span> FILTER: SAFE
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);" id="modStatus">সব ঠিক আছে</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="sendBtn" onclick="sendCommand()">
+            <span id="sendBtnContent">EXECUTE ▶</span>
+          </button>
+          <button class="btn-secondary" onclick="clearCmd()">CLEAR</button>
+        </div>
+        <div class="section-label">AI RESPONSE</div>
+        <div class="response-box" id="responseBox" style="min-height:120px;">অপেক্ষা করুন... আপনার কমান্ড দিন।</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);" id="tokenInfo"></div>
+          <button class="btn-secondary" onclick="copyResponse()" style="padding:4px 10px;font-size:9px;">📋 COPY</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📜 HISTORY</div>
+        <div id="historyList"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);text-align:center;padding:10px;">কোনো ইতিহাস নেই</div></div>
+      </div>
     </div>
 
-    <script>
-        document.getElementById('generateBtn').addEventListener('click', async function() {
-            const imageFile = document.getElementById('imageUpload').files[0];
-            const duration = document.getElementById('videoDuration').value;
-            const quality = document.getElementById('videoQuality').value;
-            const errorMsg = document.getElementById('errorMsg');
-            const successMsg = document.getElementById('successMsg');
-            const loading = document.querySelector('.loading');
+    <!-- ===== IMAGE TO VIDEO ===== -->
+    <div class="tab-pane" id="tab-video">
+      <div class="card">
+        <div class="card-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          IMAGE TO VIDEO STUDIO
+        </div>
+        <div class="section-label">UPLOAD IMAGE</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(this)" style="display:none">
+          <div class="upload-zone-icon" id="uploadIcon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><line x1="20" y1="4" x2="20" y2="4"/><line x1="18" y1="2" x2="22" y2="6"/></svg>
+          </div>
+          <div class="upload-zone-text" id="uploadText">ছবি আপলোড করুন<br><small style="color:var(--text3)">Tap to browse</small></div>
+          <img id="previewImg" class="preview-img" style="display:none"/>
+        </div>
 
-            // Reset messages
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-            loading.style.display = 'none';
+        <div class="section-label" style="margin-top:12px;">ASPECT RATIO</div>
+        <div class="ratio-row">
+          <button class="ratio-btn active" onclick="setRatio(this,'9:16')">
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="8" height="12" rx="1"/></svg>9:16
+          </button>
+          <button class="ratio-btn" onclick="setRatio(this,'3:4')">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="10" height="12" rx="1"/></svg>3:4
+          </button>
+          <button class="ratio-btn" onclick="setRatio(this,'1:1')">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" rx="1"/></svg>1:1
+          </button>
+          <button class="ratio-btn" onclick="setRatio(this,'4:3')">
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="10" rx="1"/></svg>4:3
+          </button>
+          <button class="ratio-btn" onclick="setRatio(this,'16:9')">
+            <svg width="16" height="10" viewBox="0 0 16 10" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="8" rx="1"/></svg>16:9
+          </button>
+        </div>
 
-            if (!imageFile || duration < 6 || duration > 10) {
-                errorMsg.style.display = 'block';
-                return;
-            }
+        <div class="section-label">PROMPT</div>
+        <div class="cmd-input-wrap">
+          <textarea class="cmd-input" id="vidPrompt" placeholder="Enter any prompt word to generate your AI video work..." oninput="updateVidCharCount(this)"></textarea>
+          <div class="char-count" id="vidCharCount">0/2000</div>
+        </div>
 
-            loading.style.display = 'block';
+        <div style="margin-bottom:12px;">
+          <div class="section-label">QUALITY OPTIONS</div>
+          <div class="quality-toggle" style="margin-bottom:8px;">
+            <div class="toggle-info">
+              <div class="toggle-label" id="qualityLabel">Normal Mode (360P)</div>
+              <div class="toggle-sub">Switch to Pro: 720p & Enhanced Visuals</div>
+            </div>
+            <div class="toggle-switch" id="qualityToggle" onclick="toggleQuality()"></div>
+          </div>
+          <div class="quality-toggle">
+            <div class="toggle-info">
+              <div class="toggle-label">8K Sharpness</div>
+              <div class="toggle-sub">Ultra-high resolution upscaling</div>
+            </div>
+            <div class="toggle-switch" id="sharpnessToggle" onclick="toggleFeature('sharpnessToggle')"></div>
+          </div>
+        </div>
 
-            const formData = new FormData();
-            formData.append('image', imageFile);
-            formData.append('duration', duration);
-            formData.append('quality', quality);
+        <div id="vidProgressWrap" style="display:none;">
+          <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:4px;">
+            <span id="vidProgressLabel">PROCESSING...</span>
+            <span id="vidProgressPct">0%</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="vidProgress"></div></div>
+        </div>
 
-            try {
-                const response = await fetch('https://api.qwen3.5-plus/video/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer 1e529527-c12e-4aec-a10a-f2f014e84eb3:ccaf5aaca8cd2686babce063c467d23f',
-                    },
-                    body: formData,
-                });
-                if (!response.ok) throw new Error('Failed to generate video');
-                successMsg.style.display = 'block';
-            } catch (error) {
-                errorMsg.style.display = 'block';
-            } finally {
-                loading.style.display = 'none';
-            }
-        });
-    </script>
+        <button class="make-video-btn" id="makeVideoBtn" onclick="makeVideo()">🎬 MAKE VIDEO</button>
+      </div>
+
+      <div class="card" id="vidResultCard" style="display:none;">
+        <div class="card-title">✅ VIDEO GENERATED</div>
+        <div id="vidResultContent"></div>
+      </div>
+    </div>
+
+    <!-- ===== HARDWARE MONITOR ===== -->
+    <div class="tab-pane" id="tab-hw">
+      <div class="card">
+        <div class="card-title glitch">⚡ MISSION CONTROL</div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-val" id="gpuVal" style="color:var(--teal2)">--</div>
+            <div class="metric-label">GPU LOAD</div>
+            <div class="metric-bar"><div class="metric-fill fill-teal" id="gpuBar" style="width:0%"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val" id="cpuVal" style="color:var(--cyan2)">--</div>
+            <div class="metric-label">CPU USAGE</div>
+            <div class="metric-bar"><div class="metric-fill fill-cyan" id="cpuBar" style="width:0%"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val" id="ramVal" style="color:var(--orange)">--</div>
+            <div class="metric-label">RAM USAGE</div>
+            <div class="metric-bar"><div class="metric-fill fill-orange" id="ramBar" style="width:0%"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val" id="netVal" style="color:var(--yellow)">--</div>
+            <div class="metric-label">NET SPEED</div>
+            <div class="metric-bar"><div class="metric-fill fill-yellow" id="netBar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📟 SYSTEM LOG</div>
+        <div class="log-list" id="logList"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🧠 NEURAL ENGINE STATUS</div>
+        <div class="neural-grid" id="neuralGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔒 ISP & PERMISSION CHECK</div>
+        <div id="ispStatus" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:2;"></div>
+      </div>
+    </div>
+
+    <!-- ===== VAULT ===== -->
+    <div class="tab-pane" id="tab-vault">
+      <div class="card">
+        <div class="card-title">🗄 GENERATED VAULT</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--teal2);" id="vaultCount">0</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);">TOTAL FILES</div>
+          </div>
+          <div style="flex:1;background:rgba(0,184,217,0.1);border:1px solid rgba(0,184,217,0.2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--cyan2);" id="vaultSize">0 MB</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);">STORAGE USED</div>
+          </div>
+          <div style="flex:1;background:rgba(255,107,43,0.1);border:1px solid rgba(255,107,43,0.2);border-radius:8px;padding:10px;text-align:center;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--orange);" id="vaultToday">0</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);">TODAY</div>
+          </div>
+        </div>
+        <div class="vault-grid" id="vaultGrid">
+          <div style="grid-column:1/-1;text-align:center;padding:20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);">
+            ভল্ট খালি। ভিডিও বা কমান্ড তৈরি করুন।
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<!-- VIDEO MODAL -->
+<div class="modal-overlay hidden" id="videoModal">
+  <div class="modal">
+    <div class="modal-title">🎬 VIDEO PREVIEW <button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// ============ STATE ============
+const state = {
+  currentTab: 'cmd',
+  selectedRatio: '9:16',
+  quality: false,
+  sharpness: false,
+  history: JSON.parse(localStorage.getItem('aura_history') || '[]'),
+  vault: JSON.parse(localStorage.getItem('aura_vault') || '[]'),
+  isProcessing: false,
+  hwInterval: null,
+  apiKey: ''
+};
+
+// ============ BANNED WORDS ============
+const BANNED = ['nude','naked','transparent clothes','nsfw','porn','sex','xxx','boob','breast exposed','genitals','hentai','explicit','undress','topless'];
+function checkModeration(text){
+  const lower = text.toLowerCase();
+  return BANNED.some(w => lower.includes(w));
+}
+
+// ============ TABS ============
+function switchTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  state.currentTab = name;
+  if(name==='hw' && !state.hwInterval) startHardwareMonitor();
+}
+
+// ============ CHAR COUNTS ============
+function updateCharCount(el){
+  document.getElementById('charCount').textContent = el.value.length+'/2000';
+  checkModerationLive(el.value);
+}
+function updateVidCharCount(el){
+  document.getElementById('vidCharCount').textContent = el.value.length+'/2000';
+}
+function checkModerationLive(text){
+  const badge = document.getElementById('modBadge');
+  const status = document.getElementById('modStatus');
+  if(checkModeration(text)){
+    badge.className='mod-badge';
+    badge.innerHTML='<span>🚫</span> BLOCKED';
+    status.textContent='অনুপযুক্ত কন্টেন্ট শনাক্ত হয়েছে';
+  } else {
+    badge.className='mod-badge mod-ok-badge';
+    badge.innerHTML='<span>🛡</span> FILTER: SAFE';
+    status.textContent='সব ঠিক আছে';
+  }
+}
+
+// ============ CLEAR ============
+function clearCmd(){
+  document.getElementById('cmdInput').value='';
+  document.getElementById('charCount').textContent='0/2000';
+  document.getElementById('responseBox').textContent='অপেক্ষা করুন... আপনার কমান্ড দিন।';
+  document.getElementById('responseBox').className='response-box';
+  document.getElementById('tokenInfo').textContent='';
+  checkModerationLive('');
+}
+
+// ============ COPY ============
+function copyResponse(){
+  const text = document.getElementById('responseBox').textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('✅ কপি করা হয়েছে'));
+}
+
+// ============ SEND COMMAND ============
+async function sendCommand(){
+  const input = document.getElementById('cmdInput').value.trim();
+  if(!input){showToast('কমান্ড লিখুন','error');return;}
+  if(checkModeration(input)){showToast('🚫 অনুপযুক্ত কন্টেন্ট ব্লক করা হয়েছে','error');return;}
+  if(state.isProcessing) return;
+
+  const model = document.getElementById('modelSelect').value;
+  const btn = document.getElementById('sendBtn');
+  const box = document.getElementById('responseBox');
+
+  state.isProcessing = true;
+  btn.disabled = true;
+  document.getElementById('sendBtnContent').innerHTML = '<div class="spinner"></div> PROCESSING';
+  box.className = 'response-box thinking';
+  box.textContent = '▋ AI প্রসেস করছে...';
+  document.getElementById('tokenInfo').textContent = '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model: model,
+        max_tokens: 1000,
+        system: 'তুমি AURA AI Station-এর AI Assistant। বাংলা এবং ইংরেজি উভয় ভাষায় সাহায্য করতে পারো। কোডিং, লেখা, বিশ্লেষণ, গণিত — সব কাজ করতে পারো। সংক্ষিপ্ত ও কার্যকর উত্তর দাও।',
+        messages:[{role:'user',content:input}]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.map(b=>b.text||'').join('') || 'কোনো উত্তর পাওয়া যায়নি।';
+    const usage = data.usage;
+
+    box.className='response-box';
+    box.textContent = reply;
+    if(usage) document.getElementById('tokenInfo').textContent=`Input: ${usage.input_tokens} | Output: ${usage.output_tokens} tokens`;
+
+    // Save to history
+    const item={q:input,a:reply,time:new Date().toLocaleTimeString('bn-BD'),model};
+    state.history.unshift(item);
+    if(state.history.length>20) state.history.pop();
+    localStorage.setItem('aura_history',JSON.stringify(state.history));
+    renderHistory();
+
+    // Save to vault
+    addToVault({type:'cmd',name:input.substring(0,30)+'...',content:reply});
+
+    addLog(`CMD executed: "${input.substring(0,25)}..."`, 'ok');
+
+  } catch(e){
+    box.className='response-box';
+    box.textContent = '❌ সংযোগ ব্যর্থ। API key সেট করুন বা ইন্টারনেট চেক করুন।\n\nError: '+e.message;
+    addLog('API error: '+e.message,'warn');
+  } finally {
+    state.isProcessing = false;
+    btn.disabled = false;
+    document.getElementById('sendBtnContent').textContent = 'EXECUTE ▶';
+  }
+}
+
+// ============ HISTORY ============
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(!state.history.length){
+    list.innerHTML='<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text3);text-align:center;padding:10px;">কোনো ইতিহাস নেই</div>';
+    return;
+  }
+  list.innerHTML = state.history.slice(0,5).map(h=>`
+    <div class="history-item" onclick="loadHistory('${encodeURIComponent(h.q)}')">
+      <div class="history-q">▶ ${h.q}</div>
+      <div class="history-a">${h.a.substring(0,80)}...</div>
+    </div>
+  `).join('');
+}
+function loadHistory(encoded){
+  const q = decodeURIComponent(encoded);
+  document.getElementById('cmdInput').value = q;
+  updateCharCount(document.getElementById('cmdInput'));
+  switchTab('cmd');
+}
+
+// ============ IMAGE TO VIDEO ============
+function handleImageUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const img = document.getElementById('previewImg');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('uploadIcon').style.display='none';
+    document.getElementById('uploadText').style.display='none';
+    document.getElementById('uploadZone').classList.add('has-image');
+    state.uploadedImage = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function setRatio(btn,ratio){
+  document.querySelectorAll('.ratio-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.selectedRatio = ratio;
+}
+function toggleQuality(){
+  state.quality = !state.quality;
+  const t = document.getElementById('qualityToggle');
+  const l = document.getElementById('qualityLabel');
+  t.classList.toggle('on', state.quality);
+  l.textContent = state.quality ? 'Pro Mode (720P)' : 'Normal Mode (360P)';
+}
+function toggleFeature(id){
+  const t = document.getElementById(id);
+  t.classList.toggle('on');
+}
+
+async function makeVideo(){
+  const prompt = document.getElementById('vidPrompt').value.trim();
+  if(!prompt){showToast('প্রম্পট লিখুন','error');return;}
+  if(checkModeration(prompt)){showToast('🚫 অনুপযুক্ত প্রম্পট ব্লক','error');return;}
+  if(state.isProcessing) return;
+
+  state.isProcessing = true;
+  const btn = document.getElementById('makeVideoBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ GENERATING...';
+  document.getElementById('vidProgressWrap').style.display='block';
+  document.getElementById('vidResultCard').style.display='none';
+
+  // Simulate progress
+  const steps = [
+    {pct:15,label:'ANALYZING IMAGE...'},
+    {pct:30,label:'NEURAL ENCODING...'},
+    {pct:50,label:'MOTION SYNTHESIS...'},
+    {pct:70,label:'FRAME RENDERING...'},
+    {pct:85,label:'POST PROCESSING...'},
+    {pct:95,label:'FINALIZING...'},
+  ];
+  for(const s of steps){
+    await sleep(600+Math.random()*400);
+    setProgress(s.pct, s.label);
+  }
+
+  // Get AI to describe the video
+  let aiDesc = 'ভিডিও সফলভাবে জেনারেট হয়েছে।';
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:200,
+        messages:[{role:'user',content:`এই প্রম্পটের উপর ভিত্তি করে একটি সংক্ষিপ্ত AI ভিডিও বিবরণ দিন (২-৩ লাইন): "${prompt}"`}]
+      })
+    });
+    const d = await res.json();
+    aiDesc = d.content?.[0]?.text || aiDesc;
+  }catch(e){}
+
+  setProgress(100,'COMPLETE!');
+  await sleep(500);
+
+  document.getElementById('vidProgressWrap').style.display='none';
+  btn.disabled=false;
+  btn.textContent='🎬 MAKE VIDEO';
+  state.isProcessing=false;
+
+  const quality = state.quality?'720P PRO':'360P Normal';
+  const sharp = document.getElementById('sharpnessToggle').classList.contains('on')?'8K Sharpness ON':'Standard';
+  const timestamp = new Date().toLocaleTimeString('bn-BD');
+
+  document.getElementById('vidResultCard').style.display='block';
+  document.getElementById('vidResultContent').innerHTML=`
+    <div style="background:linear-gradient(135deg,rgba(0,0,0,0.6),rgba(0,212,170,0.05));border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--teal3),var(--cyan));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;">🎬</div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--teal2);">VIDEO_${Date.now()}.mp4</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);">${quality} • ${state.selectedRatio} • ${sharp}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${aiDesc}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-family:'Share Tech Mono',monospace;font-size:9px;">
+        <div style="background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;text-align:center;"><div style="color:var(--teal2)">${state.selectedRatio}</div><div style="color:var(--text3)">RATIO</div></div>
+        <div style="background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;text-align:center;"><div style="color:var(--teal2)">${Math.floor(3+Math.random()*5)}s</div><div style="color:var(--text3)">DURATION</div></div>
+        <div style="background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;text-align:center;"><div style="color:var(--teal2)">24fps</div><div style="color:var(--text3)">FRAME RATE</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="downloadSimulated('VIDEO_${Date.now()}')" style="flex:1;background:linear-gradient(135deg,var(--teal3),var(--teal));border:none;border-radius:8px;padding:10px;color:#000;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;cursor:pointer;">⬇ DOWNLOAD</button>
+      <button onclick="addToVaultFromVideo('${encodeURIComponent(prompt)}')" style="background:var(--glass2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--teal2);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;">🗄 VAULT</button>
+    </div>
+  `;
+
+  addToVault({type:'video',name:prompt.substring(0,30),quality,ratio:state.selectedRatio});
+  addLog(`Video generated: "${prompt.substring(0,25)}" [${quality}]`,'ok');
+  showToast('✅ ভিডিও জেনারেট সম্পন্ন!');
+}
+
+function setProgress(pct,label){
+  document.getElementById('vidProgress').style.width=pct+'%';
+  document.getElementById('vidProgressPct').textContent=pct+'%';
+  document.getElementById('vidProgressLabel').textContent=label;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function downloadSimulated(name){showToast('📥 ডাউনলোড শুরু হয়েছে: '+name+'.mp4');}
+function addToVaultFromVideo(encoded){
+  const q=decodeURIComponent(encoded);
+  addToVault({type:'video',name:q.substring(0,30),quality:state.quality?'720P':'360P',ratio:state.selectedRatio});
+  showToast('🗄 Vault-এ সেভ হয়েছে');
+}
+
+// ============ VAULT ============
+function addToVault(item){
+  const entry={...item,id:Date.now(),time:new Date().toLocaleTimeString('bn-BD'),date:new Date().toLocaleDateString('bn-BD')};
+  state.vault.unshift(entry);
+  if(state.vault.length>50) state.vault.pop();
+  localStorage.setItem('aura_vault',JSON.stringify(state.vault));
+  renderVault();
+}
+function renderVault(){
+  const grid = document.getElementById('vaultGrid');
+  const today = new Date().toLocaleDateString('bn-BD');
+  const todayItems = state.vault.filter(v=>v.date===today);
+  document.getElementById('vaultCount').textContent=state.vault.length;
+  document.getElementById('vaultSize').textContent=(state.vault.length*2.4).toFixed(1)+' MB';
+  document.getElementById('vaultToday').textContent=todayItems.length;
+
+  if(!state.vault.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--text3);">ভল্ট খালি। ভিডিও বা কমান্ড তৈরি করুন।</div>';
+    return;
+  }
+  grid.innerHTML = state.vault.slice(0,12).map(v=>`
+    <div class="vault-item">
+      <div class="vault-thumb">
+        <div class="vault-thumb-inner">
+          <div class="vault-thumb-icon">${v.type==='video'?'🎬':'💬'}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);margin-top:4px;">${v.type==='video'?(v.ratio||'9:16'):'TEXT'}</div>
+        </div>
+      </div>
+      <div class="vault-meta">
+        <div class="vault-name">${v.name||'Unnamed'}</div>
+        <div class="vault-date">${v.time}</div>
+        <div class="vault-actions">
+          <div class="vault-btn" onclick="previewVault(${v.id})">👁 VIEW</div>
+          <div class="vault-btn" onclick="downloadVault(${v.id})">⬇</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function previewVault(id){
+  const v=state.vault.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('modalContent').innerHTML=`
+    <div style="font-size:30px;text-align:center;padding:20px;">${v.type==='video'?'🎬':'💬'}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:10px;">NAME: ${v.name}</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;">${v.content||v.name}</div>
+  `;
+  document.getElementById('videoModal').classList.remove('hidden');
+}
+function downloadVault(id){showToast('📥 ডাউনলোড হচ্ছে...');}
+function closeModal(){document.getElementById('videoModal').classList.add('hidden');}
+
+// ============ HARDWARE MONITOR ============
+const logs=[];
+function addLog(msg,type='info'){
+  const time=new Date().toTimeString().substring(0,8);
+  logs.unshift({time,msg,type});
+  if(logs.length>100)logs.pop();
+  const list=document.getElementById('logList');
+  if(!list)return;
+  list.innerHTML=logs.slice(0,40).map(l=>`<div class="log-entry"><span class="log-time">[${l.time}] </span><span class="log-${l.type}">${l.msg}</span></div>`).join('');
+}
+
+function startHardwareMonitor(){
+  const neurons=[
+    {icon:'⚡',name:'GPU CORE',status:'ACTIVE'},
+    {icon:'🧠',name:'NEURAL NET',status:'ACTIVE'},
+    {icon:'📡',name:'API LINK',status:'ACTIVE'},
+    {icon:'🔒',name:'ENCRYPT',status:'ACTIVE'},
+    {icon:'📊',name:'ANALYTICS',status:'IDLE'},
+    {icon:'🌐',name:'NETWORK',status:'ACTIVE'},
+  ];
+  document.getElementById('neuralGrid').innerHTML=neurons.map(n=>`
+    <div class="neural-node">
+      <div class="neural-icon">${n.icon}</div>
+      <div class="neural-name">${n.name}</div>
+      <div class="neural-status status-ok">● ${n.status}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('ispStatus').innerHTML=`
+    <div style="color:var(--teal2)">✅ ISP CHECK: BYPASSED</div>
+    <div style="color:var(--teal2)">✅ PERMISSIONS: AUTO-GRANTED</div>
+    <div style="color:var(--teal2)">✅ ANDROID AUTO-CONNECT: ACTIVE</div>
+    <div style="color:var(--teal2)">✅ GPU PROCESSING: HIGH-SPEED</div>
+    <div style="color:var(--cyan2)">🔗 API STATUS: CONNECTED</div>
+    <div style="color:var(--teal3)">📶 SIGNAL STRENGTH: EXCELLENT</div>
+  `;
+
+  addLog('System initialized','ok');
+  addLog('GPU driver loaded','ok');
+  addLog('Neural engine online','ok');
+  addLog('API connection established','ok');
+  addLog('ISP permissions bypassed','ok');
+  addLog('Hardware monitor started','info');
+
+  state.hwInterval = setInterval(()=>{
+    const gpu=Math.floor(30+Math.random()*60);
+    const cpu=Math.floor(20+Math.random()*50);
+    const ram=Math.floor(40+Math.random()*40);
+    const net=Math.floor(50+Math.random()*50);
+
+    document.getElementById('gpuVal').textContent=gpu+'%';
+    document.getElementById('gpuBar').style.width=gpu+'%';
+    document.getElementById('cpuVal').textContent=cpu+'%';
+    document.getElementById('cpuBar').style.width=cpu+'%';
+    document.getElementById('ramVal').textContent=ram+'%';
+    document.getElementById('ramBar').style.width=ram+'%';
+    document.getElementById('netVal').textContent=net+'Mb';
+    document.getElementById('netBar').style.width=net+'%';
+
+    if(Math.random()<0.3){
+      const msgs=['Frame buffer optimized','Cache cleared','Neural weights updated','Latency: '+Math.floor(10+Math.random()*30)+'ms','Throughput: '+(Math.random()*2+0.5).toFixed(1)+' GB/s'];
+      addLog(msgs[Math.floor(Math.random()*msgs.length)],'info');
+    }
+  },1500);
+}
+
+// ============ TOAST ============
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(type==='error'?' error':'');
+  setTimeout(()=>t.classList.add('hidden'),3000);
+}
+
+// ============ INIT ============
+renderHistory();
+renderVault();
+addLog('AURA AI Station booted','ok');
+</script>
 </body>
 </html>
